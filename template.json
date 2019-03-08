@@ -9,7 +9,7 @@
         "description": "Virtual machine size (has to be at least the size of Standard_A3 to support 2 NICs)"
       }
     },
-    "adminUsername": {
+    "username": {
       "type": "string",
       "metadata": {
         "description": "Default Admin username"
@@ -65,7 +65,7 @@
       "name": "[variables('virtualMachineName1')]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2017-03-30",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "This is the virtual machine that you're building.",
       "dependsOn": [
         "[variables('nic1')]",
@@ -74,7 +74,7 @@
       "properties": {
         "osProfile": {
           "computerName": "[variables('virtualMachineName1')]",
-          "adminUsername": "[parameters('adminUsername')]",
+          "adminUsername": "[parameters('username')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "provisionVmAgent": "true"
@@ -117,7 +117,7 @@
       "name": "[variables('virtualMachineName2')]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2017-03-30",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "This is the virtual machine that you're building.",
       "dependsOn": [
         "[variables('nic2')]",
@@ -126,7 +126,7 @@
       "properties": {
         "osProfile": {
           "computerName": "[variables('virtualMachineName2')]",
-          "adminUsername": "[parameters('adminUsername')]",
+          "adminUsername": "[parameters('username')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "provisionVmAgent": "true"
@@ -169,7 +169,7 @@
       "name": "[variables('virtualMachineName3')]",
       "type": "Microsoft.Compute/virtualMachines",
       "apiVersion": "2017-03-30",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "This is the virtual machine that you're building.",
       "dependsOn": [
         "[variables('nic3')]",
@@ -178,7 +178,7 @@
       "properties": {
         "osProfile": {
           "computerName": "[variables('virtualMachineName3')]",
-          "adminUsername": "[parameters('adminUsername')]",
+          "adminUsername": "[parameters('username')]",
           "adminPassword": "[parameters('adminPassword')]",
           "windowsConfiguration": {
             "provisionVmAgent": "true"
@@ -221,7 +221,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('diagStorageAccountName')]",
       "apiVersion": "2017-06-01",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       },
@@ -232,7 +232,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "apiVersion": "2017-06-01",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "This will build a Virtual Network.",
       "properties": {
         "addressSpace": {
@@ -266,7 +266,7 @@
       "name": "[variables('nic1')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2017-06-01",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "This will be your Primary NIC",
       "dependsOn": [
         "[variables('publicIpAddressName')]",
@@ -297,7 +297,7 @@
       "name": "[variables('nic2')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2017-06-01",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "This will be your Secondary NIC",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -323,7 +323,7 @@
       "name": "[variables('nic3')]",
       "type": "Microsoft.Network/networkInterfaces",
       "apiVersion": "2017-06-01",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "This will be your Secondary NIC",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -349,7 +349,7 @@
       "name": "[variables('publicIpAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2017-06-01",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "Public IP for your Primary NIC",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
@@ -359,7 +359,7 @@
       "name": "[variables('networkSecurityGroupName1')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2016-09-01",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "Network Security Group (NSG) for your Primary NIC",
       "properties": {
         "securityRules": [
@@ -396,7 +396,7 @@
       "name": "[variables('networkSecurityGroupName2')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2016-09-01",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "Network Security Group (NSG) for your Primary NIC",
       "properties": {
         "securityRules": [
@@ -420,7 +420,7 @@
       "name": "[variables('networkSecurityGroupName3')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2016-09-01",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "comments": "Network Security Group (NSG) for your Primary NIC",
       "properties": {
         "securityRules": [
