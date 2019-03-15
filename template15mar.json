@@ -1,0 +1,830 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "environments": {
+      "defaultValue": [
+        "Dev",
+        "QA"
+      ],
+      "type": "array",
+      "metadata": {
+        "description": "Array with the names for the environment  "
+      },
+      "maxLength": 19
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS1_v2",
+      "metadata": {
+        "description": "Virtual machine size"
+      }
+    },
+    "username": {
+      "type": "string",
+      "metadata": {
+        "description": "Default Admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Default Admin password"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Storage Account type for the VM and VM diagnostic storage"
+      },
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS"
+      ]
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "standardPlanMaxAdditionalSlots": 2,
+    "webAppPortalName": "[concat(resourcegroup().name, 'Portal')]",
+    "appServicePlanName": "[concat('AppServicePlan-', resourcegroup().name)]",
+    "sites_name": "alankar",
+    "string1": "/subscriptions/318420cc-39e5-4eec-bd54-9d92e805960a/resourceGroups/",
+    "string2": "/providers/Microsoft.Network/applicationGateways/",
+    "string3": "/frontendIPConfigurations/appGatewayFrontendIP",
+    "applicationGateways_name": "wafalan",
+    "applicationGateways_wafalan_id": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', resourcegroup().name, '/providers/Microsoft.Network/applicationGateways/', variables('applicationGateways_name'),'/frontendIPConfigurations/appGatewayFrontendIP')]",
+    "applicationGateways_wafalan_id_1": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', resourcegroup().name, '/providers/Microsoft.Network/applicationGateways/', variables('applicationGateways_name'),'/frontendPorts/appGatewayFrontendPort')]",
+    "applicationGateways_wafalan_id_2": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', resourcegroup().name, '/providers/Microsoft.Network/applicationGateways/', variables('applicationGateways_name'),'/httpListeners/appGatewayHttpListener')]",
+    "applicationGateways_wafalan_id_3": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', resourcegroup().name, '/providers/Microsoft.Network/applicationGateways/', variables('applicationGateways_name'),'/backendAddressPools/appGatewayBackendPool')]",
+    "applicationGateways_wafalan_id_4": "[concat('/subscriptions/', variables('subscriptionId'),'/resourcegroups/', resourcegroup().name, '/providers/Microsoft.Network/applicationGateways/', variables('applicationGateways_name'),'/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]",
+    "diagStorageAccountName": "[concat('diags',uniqueString(resourceGroup().id))]",
+    "dnszones_name": "alankar.com",
+    "networkSecurityGroupName1": "NSG1",
+    "networkSecurityGroupName2": "NSG2",
+    "networkSecurityGroupName3": "NSG3",
+    "nic1": "nic-1",
+    "nic2": "nic-2",
+    "nic3": "nic-3",
+    "nic-adconnect": "nic-adconnect",
+    "NS_name": "NS1",
+    "publicIPAddressName": "publicIp",
+    "SOA_name": "SOA1",
+    "subnet1Name": "subnet-1",
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]",
+    "subnet2Name": "subnet-2",
+    "subnet2Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet2Name'))]",
+    "subnet3Name": "subnet-3",
+    "subnet3Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet3Name'))]",
+    "subnet4Name": "subnet-4",
+    "subnet4Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet4Name'))]",
+    "subnet5Name": "subnet-5",
+    "virtualMachineName1": "VM-jumpserver",
+    "virtualMachineName2": "VM-adserver",
+    "virtualMachineName3": "VM-toolserver",
+    "virtualNetworkName": "virtualNetwork",
+    "publicIPAddresses_name": "adconnectserv-pubip",
+    "serverName": "sqlserveralan",
+    "databaseName": "alandb",
+    "edition": "Free",
+    "collation": "SQL_Latin1_General_CP1_CI_AS",
+    "maxSizeBytes": "33554432",
+    "requestedServiceObjectiveId": "6aa3bb3e-7f50-40d6-95ef-5497c30d99d8",
+    "name": "webappalan",
+    "hostingPlanName": "ServicePlan8e56017a-abac",
+    "hostingEnvironment": "",
+    "sku": "Standard",
+    "skuCode": "S1",
+    "workerSize": "0",
+    "subscriptionId": "318420cc-39e5-4eec-bd54-9d92e805960a",
+    "domainname": "globant.com"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "sku": {
+        "name": "Basic",
+        "tier": "Regional"
+      },
+      "name": "[variables('publicIPAddresses_name')]",
+      "apiVersion": "2018-12-01",
+      "location": "eastus",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "resourceGuid": "2ecd7081-4b90-4fbf-8d47-cf1b1a3123fb",
+        "ipAddress": "52.224.54.77",
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4,
+        "ipTags": []
+      },
+      "dependsOn": []
+    },
+    {
+      "name": "[variables('nic1')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "comments": "This will be your Primary NIC",
+      "dependsOn": [
+        "[variables('publicIpAddressName')]",
+        "[variables('networkSecurityGroupName1')]",
+        "[variables('virtualNetworkName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIpAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName1'))]"
+        }
+      }
+    },
+    {
+      "name": "[variables('nic2')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "comments": "This will be your Secondary NIC",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnet2Ref')]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName2'))]"
+        }
+      }
+    },
+    {
+      "name": "[variables('nic3')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "comments": "This will be your Secondary NIC",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnet3Ref')]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName3'))]"
+        }
+      }
+    },
+    {
+      "name": "[variables('publicIpAddressName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "comments": "Public IP for your Primary NIC",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "name": "[variables('networkSecurityGroupName1')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2016-09-01",
+      "location": "[resourceGroup().location]",
+      "comments": "Network Security Group (NSG) for your Primary NIC",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('networkSecurityGroupName2')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2016-09-01",
+      "location": "[resourceGroup().location]",
+      "comments": "Network Security Group (NSG) for your Primary NIC",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefix": "10.0.1.0/24",
+              "protocol": "Tcp",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('networkSecurityGroupName3')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2016-09-01",
+      "location": "[resourceGroup().location]",
+      "comments": "Network Security Group (NSG) for your Primary NIC"
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "comments": "This will build a Virtual Network.",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24"
+            }
+          },
+          {
+            "name": "[variables('subnet2Name')]",
+            "properties": {
+              "addressPrefix": "10.0.2.0/24"
+            }
+          },
+          {
+            "name": "[variables('subnet3Name')]",
+            "properties": {
+              "addressPrefix": "10.0.3.0/24"
+            }
+          },
+          {
+            "name": "[variables('subnet4Name')]",
+            "properties": {
+              "addressPrefix": "10.0.4.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('virtualNetworkName'), '/', variables('subnet1Name'))]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-11-01",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "addressPrefix": "10.0.1.0/24",
+        "delegations": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('virtualNetworkName'), '/', variables('subnet2Name'))]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-11-01",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "addressPrefix": "10.0.2.0/24",
+        "delegations": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('virtualNetworkName'), '/', variables('subnet3Name'))]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-11-01",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "addressPrefix": "10.0.3.0/24",
+        "delegations": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(variables('virtualNetworkName'), '/', variables('subnet4Name'))]",
+      "location": "[parameters('location')]",
+      "apiVersion": "2018-11-01",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "addressPrefix": "10.0.4.0/24",
+        "serviceEndpoints": [],
+        "delegations": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2016-08-01",
+      "type": "Microsoft.Web/sites",
+      "kind": "app",
+      "name": "[variables('webAppPortalName')]",
+      "location": "[parameters('location')]",
+      "comments": "This is the web app, also the default 'nameless' slot.",
+      "tags": {
+        "displayName": "WebApp"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      ]
+    },
+    {
+      "apiVersion": "2017-08-01",
+      "type": "Microsoft.Web/serverfarms",
+      "kind": "app",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "comments": "This app service plan is used for the web app and slots.",
+      "tags": {
+        "displayName": "AppServicePlan"
+      },
+      "properties": {},
+      "dependsOn": [],
+      "sku": {
+        "name": "[if(lessOrEquals(length(parameters('environments')), variables('standardPlanMaxAdditionalSlots')), 'S1', 'P1')]"
+      }
+    },
+    {
+      "apiVersion": "2016-08-01",
+      "type": "Microsoft.Web/sites/slots",
+      "name": "[concat(variables('webAppPortalName'), '/', parameters('environments')[copyIndex()])]",
+      "kind": "app",
+      "location": "[parameters('location')]",
+      "comments": "This specifies the web app slots.",
+      "tags": {
+        "displayName": "WebAppSlots"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/Sites', variables('webAppPortalName'))]"
+      ],
+      "copy": {
+        "name": "webPortalSlot",
+        "count": "[length(parameters('environments'))]"
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "name": "[variables('serverName')]",
+      "apiVersion": "2014-04-01-preview",
+      "location": "[parameters('location')]",
+      "properties": {
+        "administratorLogin": "[parameters('username')]",
+        "administratorLoginPassword": "[parameters('adminPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "type": "databases",
+          "name": "[variables('databaseName')]",
+          "apiVersion": "2014-04-01-preview",
+          "location": "[resourceGroup().location]",
+          "properties": {
+            "edition": "[variables('edition')]",
+            "collation": "[variables('collation')]",
+            "maxSizeBytes": "[variables('maxSizeBytes')]",
+            "requestedServiceObjectiveId": "[variables('requestedServiceObjectiveId')]"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('serverName'))]"
+          ]
+        },
+        {
+          "type": "firewallrules",
+          "name": "AllowAllWindowsAzureIps",
+          "apiVersion": "2014-04-01-preview",
+          "location": "[resourceGroup().location]",
+          "properties": {
+            "endIpAddress": "0.0.0.0",
+            "startIpAddress": "0.0.0.0"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('serverName'))]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "name": "[variables('applicationGateways_name')]",
+      "apiVersion": "2018-12-01",
+      "location": "[resourceGroup().location]",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "resourceGuid": "7cbe06c1-2080-41fa-afa3-fab2c3fcfd75",
+        "sku": {
+          "name": "Standard_Small",
+          "tier": "Standard",
+          "capacity": 2
+        },
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "etag": "W/\"9aa8dea7-795e-4a6a-ac98-a0c854704cd4\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet4Name'))]"
+              }
+            },
+            "type": "Microsoft.Network/applicationGateways/gatewayIPConfigurations"
+          }
+        ],
+        "sslCertificates": [],
+        "authenticationCertificates": [],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGatewayFrontendIP",
+            "etag": "W/\"9aa8dea7-795e-4a6a-ac98-a0c854704cd4\"",
+            "type": "Microsoft.Network/applicationGateways/frontendIPConfigurations",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "privateIPAddress": "10.0.4.4",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet4Name'))]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "appGatewayFrontendPort",
+            "etag": "W/\"9aa8dea7-795e-4a6a-ac98-a0c854704cd4\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "port": 80
+            },
+            "type": "Microsoft.Network/applicationGateways/frontendPorts"
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "appGatewayBackendPool",
+            "etag": "W/\"9aa8dea7-795e-4a6a-ac98-a0c854704cd4\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "backendAddresses": []
+            },
+            "type": "Microsoft.Network/applicationGateways/backendAddressPools"
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appGatewayBackendHttpSettings",
+            "etag": "W/\"9aa8dea7-795e-4a6a-ac98-a0c854704cd4\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "port": 80,
+              "protocol": "Http",
+              "cookieBasedAffinity": "Disabled",
+              "pickHostNameFromBackendAddress": false,
+              "requestTimeout": 30
+            },
+            "type": "Microsoft.Network/applicationGateways/backendHttpSettingsCollection"
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appGatewayHttpListener",
+            "etag": "W/\"9aa8dea7-795e-4a6a-ac98-a0c854704cd4\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "frontendIPConfiguration": {
+                "id": "[variables('applicationGateways_wafalan_id')]"
+              },
+              "frontendPort": {
+                "id": "[variables('applicationGateways_wafalan_id_1')]"
+              },
+              "protocol": "Http",
+              "requireServerNameIndication": false
+            },
+            "type": "Microsoft.Network/applicationGateways/httpListeners"
+          }
+        ],
+        "urlPathMaps": [],
+        "requestRoutingRules": [
+          {
+            "name": "rule1",
+            "etag": "W/\"9aa8dea7-795e-4a6a-ac98-a0c854704cd4\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "ruleType": "Basic",
+              "httpListener": {
+                "id": "[variables('applicationGateways_wafalan_id_2')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('applicationGateways_wafalan_id_3')]"
+              },
+              "backendHttpSettings": {
+                "id": "[variables('applicationGateways_wafalan_id_4')]"
+              }
+            },
+            "type": "Microsoft.Network/applicationGateways/requestRoutingRules"
+          }
+        ],
+        "probes": [],
+        "rewriteRuleSets": [],
+        "redirectConfigurations": [],
+        "enableHttp2": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet4Name'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/dnszones",
+      "name": "[variables('dnszones_name')]",
+      "location": "global",
+      "apiVersion": "2018-05-01",
+      "tags": {},
+      "scale": null,
+      "properties": {
+        "zoneType": "Public"
+      },
+      "dependsOn": []
+    },
+    {
+      "name": "[variables('virtualMachineName1')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This is the virtual machine that you're building.",
+      "dependsOn": [
+        "[variables('nic1')]",
+        "[variables('diagStorageAccountName')]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[variables('virtualMachineName1')]",
+          "adminUsername": "[parameters('username')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": {
+                "primary": true
+              },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic1'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName')), '2017-06-01').primaryEndpoints['blob']]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[variables('virtualMachineName2')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This is the virtual machine that you're building.",
+      "dependsOn": [
+        "[variables('nic2')]",
+        "[variables('diagStorageAccountName')]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[variables('virtualMachineName2')]",
+          "adminUsername": "[parameters('username')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": {
+                "primary": true
+              },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic2'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": false,
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName')), '2017-06-01').primaryEndpoints['blob']]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[variables('virtualMachineName3')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This is the virtual machine that you're building.",
+      "dependsOn": [
+        "[variables('nic3')]",
+        "[variables('diagStorageAccountName')]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[variables('virtualMachineName3')]",
+          "adminUsername": "[parameters('username')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "dataDisks": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": {
+                "primary": true
+              },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic3'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": false,
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName')), '2017-06-01').primaryEndpoints['blob']]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('diagStorageAccountName')]",
+      "apiVersion": "2017-06-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('virtualMachineName2'),'/Microsoft.Powershell.DSC')]",
+      "apiVersion": "2018-06-01",
+      "location": "[resourceGroup().location]",
+      "comments": "Adding custom extention for hardening software server",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName2'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.76",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "configuration": {
+            "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
+            "ModulesUrl": "https://raw.githubusercontent.com/nitinpokharna/Azureautomate/master/DSC/CreateADPDC.zip"
+          }
+        }
+      }
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(variables('virtualMachineName3'),'/Microsoft.Powershell.DSC')]",
+        "apiVersion": "2018-06-01",
+        "location": "[resourceGroup().location]",
+        "comments": "Adding custom extention for hardening software server",
+        "dependsOn": [
+          "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName3'))]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Powershell",
+          "type": "DSC",
+          "typeHandlerVersion": "2.76",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "configuration": {
+              "ConfigurationFunction": "jenkindsc.ps1\\JENKINS_CI",
+              "ModulesUrl": "https://raw.githubusercontent.com/alankarmehta/VMs-Vnet-Subnets-NSGs/master/jenkindsc.zip"
+            }
+          }
+        }
+      }
+  ],
+  "outputs": {}
+}
