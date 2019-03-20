@@ -103,7 +103,7 @@
     "sku": "Standard",
     "skuCode": "S1",
     "workerSize": "0",
-    "subscriptionId": "318420cc-39e5-4eec-bd54-9d92e805960a",
+    "subscriptionId": "2a497d09-e30f-4eda-944e-5dcfa1c66760",
     "domainname": "globant.com"
   },
   "resources": [
@@ -163,7 +163,7 @@
     {
       "name": "[variables('nic2')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2017-06-01",
+      "apiVersion": "2018-12-01",
       "location": "[resourceGroup().location]",
       "comments": "This will be your Secondary NIC",
       "dependsOn": [
@@ -225,7 +225,7 @@
     {
       "name": "[variables('networkSecurityGroupName1')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2018-12-01",
       "location": "[resourceGroup().location]",
       "comments": "Network Security Group (NSG) for your Primary NIC",
       "properties": {
@@ -249,7 +249,7 @@
     {
       "name": "[variables('networkSecurityGroupName2')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2018-12-01",
       "location": "[resourceGroup().location]",
       "comments": "Network Security Group (NSG) for your Primary NIC",
       "properties": {
@@ -273,9 +273,26 @@
     {
       "name": "[variables('networkSecurityGroupName3')]",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "apiVersion": "2016-09-01",
+      "apiVersion": "2018-12-01",
       "location": "[resourceGroup().location]",
-      "comments": "Network Security Group (NSG) for your Primary NIC"
+      "comments": "Network Security Group (NSG) for your Primary NIC",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefix": "10.0.1.0/24",
+              "protocol": "Tcp",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
@@ -321,7 +338,7 @@
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('virtualNetworkName'), '/', variables('subnet1Name'))]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-11-01",
+      "apiVersion": "2018-12-01",
       "scale": null,
       "properties": {
         "provisioningState": "Succeeded",
@@ -336,7 +353,7 @@
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('virtualNetworkName'), '/', variables('subnet2Name'))]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-11-01",
+      "apiVersion": "2018-12-01",
       "scale": null,
       "properties": {
         "provisioningState": "Succeeded",
@@ -351,7 +368,7 @@
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('virtualNetworkName'), '/', variables('subnet3Name'))]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-11-01",
+      "apiVersion": "2018-12-01",
       "scale": null,
       "properties": {
         "provisioningState": "Succeeded",
@@ -366,7 +383,7 @@
       "type": "Microsoft.Network/virtualNetworks/subnets",
       "name": "[concat(variables('virtualNetworkName'), '/', variables('subnet4Name'))]",
       "location": "[parameters('location')]",
-      "apiVersion": "2018-11-01",
+      "apiVersion": "2018-12-01",
       "scale": null,
       "properties": {
         "provisioningState": "Succeeded",
@@ -396,7 +413,7 @@
       ]
     },
     {
-      "apiVersion": "2017-08-01",
+      "apiVersion": "2015-08-01",
       "type": "Microsoft.Web/serverfarms",
       "kind": "app",
       "name": "[variables('appServicePlanName')]",
@@ -798,33 +815,32 @@
         "settings": {
           "configuration": {
             "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
-            "ModulesUrl": "https://raw.githubusercontent.com/nitinpokharna/Azureautomate/master/DSC/CreateADPDC.zip"
+            "ModulesUrl": "https://raw.githubusercontent.com/alankarmehta/VMs-Vnet-Subnets-NSGs/master/CreateADDC.zip"
           }
         }
       }
     },
     {
-        "type": "Microsoft.Compute/virtualMachines/extensions",
-        "name": "[concat(variables('virtualMachineName3'),'/Microsoft.Powershell.DSC')]",
-        "apiVersion": "2018-06-01",
-        "location": "[resourceGroup().location]",
-        "comments": "Adding custom extention for hardening software server",
-        "dependsOn": [
-          "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName3'))]"
-        ],
-        "properties": {
-          "publisher": "Microsoft.Powershell",
-          "type": "DSC",
-          "typeHandlerVersion": "2.76",
-          "autoUpgradeMinorVersion": true,
-          "settings": {
-            "configuration": {
-              "ConfigurationFunction": "jenkindsc.ps1\\JENKINS_CI",
-              "ModulesUrl": "https://raw.githubusercontent.com/alankarmehta/VMs-Vnet-Subnets-NSGs/master/jenkindsc.zip"
-            }
-          }
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('virtualMachineName3'),'/myextension')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',variables('virtualMachineName3'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.7",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "https://raw.githubusercontent.com/alankarmehta/VMs-Vnet-Subnets-NSGs/master/InsJenkins.ps1"
+          ],
+          "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File InsJenkins.ps1"
         }
       }
+    }
   ],
   "outputs": {}
 }
