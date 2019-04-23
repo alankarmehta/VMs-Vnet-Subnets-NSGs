@@ -9,7 +9,7 @@
         "value": "logs"
       },
       "location": {
-        "value": "[resourceGroup().location]"
+        "value": "east-us"
       }
     }
   }
