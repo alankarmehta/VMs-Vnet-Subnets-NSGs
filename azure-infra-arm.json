@@ -48,5 +48,11 @@
                 }
             ]
         }
-    ]
+    ],
+    "outputs": {
+        "o_storageAccountName": {
+            "type": "string",
+            "value": "[parameters('storageAccountName')]"
+        }
+    }
 }
