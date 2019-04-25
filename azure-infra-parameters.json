@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
       "storageAccountName": {
-        "value": "storageblob12345654"
+        "value": "storageblob2222224"
       },
       "containerName": {
         "value": "logs"
