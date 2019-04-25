@@ -14,13 +14,6 @@
             "metadata": {
                 "description": "Specifies the name of the blob container."
             }
-        },
-        "location": {
-            "type": "string",
-            "defaultValue": "east us",
-            "metadata": {
-                "description": "Specifies the location in which the Azure Storage resources should be deployed."
-            }
         }
     },
     "resources": [
